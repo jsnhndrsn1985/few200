@@ -1,5 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { GiftItem } from 'src/app/models';
+
+
 
 @Component({
   selector: 'app-gift-entry',
@@ -8,20 +11,40 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 })
 export class GiftEntryComponent implements OnInit {
 
-  form?: FormGroup;
+  hasErrors = false;
+  form!: FormGroup;
+  @Output() itemAdded = new EventEmitter<GiftItem>();
+  constructor(private formBuilder: FormBuilder) {
 
-  constructor(private formBuilder: FormBuilder) { }
+  }
 
   ngOnInit(): void {
     this.form = this.formBuilder.group({
-      for: [],
-      holiday: [],
-      suggestions: []
+      for: new FormControl('', [Validators.required]),
+      holiday: new FormControl('', [Validators.required, Validators.minLength(5), Validators.maxLength(50)]),
+      suggestions: new FormControl('', [Validators.required])
     });
   }
 
-  add() {
-    console.log(this.form?.value);
+  get for(): AbstractControl { return this.form.get('for') as AbstractControl; }
+  get holiday(): AbstractControl { return this.form.get('holiday') as AbstractControl; }
+  get suggestions(): AbstractControl { return this.form.get('suggestions') as AbstractControl; }
+
+  add(elementToReceiveTheFoci: HTMLElement): void {
+    if (this.form.invalid) {
+      this.hasErrors = true;
+    } else {
+      this.hasErrors = false;
+      // tell our parent (container) something happened.
+      this.itemAdded.emit({
+        for: this.for.value,
+        holiday: this.holiday.value,
+        suggestions: this.suggestions.value
+      });
+
+      this.form.reset();
+      elementToReceiveTheFoci.focus();
+    }
   }
 
 }
